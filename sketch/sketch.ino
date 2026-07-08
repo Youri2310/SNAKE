@@ -41,9 +41,18 @@ void resetGame() {
   snake[0] = { GRID_W / 2, GRID_H / 2 };
   snake[1] = { GRID_W / 2 - 1, GRID_H / 2 };
   snake[2] = { GRID_W / 2 - 2, GRID_H / 2 };
-  dirX = 1;
+  // dirX = 1;
+  // dirY = 0;
+  dirX = 0;
   dirY = 0;
   placeFood();
+}
+
+void applyKey(char c) {
+  if (c == 'z' && dirY != 1) { dirX = 0; dirY = -1; }
+  else if (c == 's' && dirY != -1) { dirX = 0; dirY = 1; }
+  else if (c == 'q' && dirX != 1) { dirX = -1; dirY = 0; }
+  else if (c == 'd' && dirX != -1) { dirX = 1; dirY = 0; }
 }
 
 void step() {
@@ -82,17 +91,21 @@ void draw() {
 }
 
 void setup() {
+  Serial.begin(115200);
   Wire.begin(PIN_SDA, PIN_SCL);
   if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR, true, false)) {
     for (;;) ;
   }
   randomSeed(esp_random());
   resetGame();
+  draw();
   lastStep = millis();
 }
 
 void loop() {
-  if (millis() - lastStep >= STEP_MS) {
+  while (Serial.available()) applyKey((char)Serial.read());
+
+  if ((dirX != 0 || dirY != 0) && millis() - lastStep >= STEP_MS) {
     lastStep = millis();
     step();
     draw();

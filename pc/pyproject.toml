@@ -1,0 +1,15 @@
+[project]
+name = "snake-controller"
+version = "0.1.0"
+description = "Controleur PC pour Snake ESP32 : capture ZQSD et envoi serie USB"
+requires-python = ">=3.9"
+dependencies = [
+    "pyserial>=3.5",
+    "pynput>=1.7",
+]
+
+[project.optional-dependencies]
+dev = ["ruff>=0.5"]
+
+[tool.ruff]
+line-length = 100
