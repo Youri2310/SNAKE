@@ -23,6 +23,10 @@ int snakeLen;
 Point food;
 int8_t dirX;
 int8_t dirY;
+int8_t nextX;
+int8_t nextY;
+bool walls;
+bool inMenu;
 unsigned long lastStep;
 
 void placeFood() {
@@ -41,32 +45,63 @@ void resetGame() {
   snake[0] = { GRID_W / 2, GRID_H / 2 };
   snake[1] = { GRID_W / 2 - 1, GRID_H / 2 };
   snake[2] = { GRID_W / 2 - 2, GRID_H / 2 };
-  // dirX = 1;
-  // dirY = 0;
-  dirX = 0;
+  dirX = 1;
   dirY = 0;
+  nextX = 0;
+  nextY = 0;
   placeFood();
 }
 
-void applyKey(char c) {
-  if (c == 'z' && dirY != 1) { dirX = 0; dirY = -1; }
-  else if (c == 's' && dirY != -1) { dirX = 0; dirY = 1; }
-  else if (c == 'q' && dirX != 1) { dirX = -1; dirY = 0; }
-  else if (c == 'd' && dirX != -1) { dirX = 1; dirY = 0; }
+void drawMenu() {
+  display.clearDisplay();
+  display.setTextColor(SSD1306_WHITE);
+  display.setTextSize(2);
+  display.setCursor(22, 6);
+  display.print("SNAKE");
+  display.setTextSize(1);
+  display.setCursor(12, 36);
+  display.print("1: Traverser");
+  display.setCursor(12, 50);
+  display.print("2: Murs");
+  display.display();
+}
+
+void gameOver() {
+  inMenu = true;
+  drawMenu();
+}
+
+void draw() {
+  display.clearDisplay();
+  if (walls)
+    display.drawRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, SSD1306_WHITE);
+  display.drawRect(food.x * CELL, food.y * CELL, CELL, CELL, SSD1306_WHITE);
+  for (int i = 0; i < snakeLen; i++)
+    display.fillRect(snake[i].x * CELL, snake[i].y * CELL, CELL, CELL, SSD1306_WHITE);
+  display.display();
 }
 
 void step() {
+  dirX = nextX;
+  dirY = nextY;
+
   int nx = snake[0].x + dirX;
   int ny = snake[0].y + dirY;
-  if (nx < 0) nx = GRID_W - 1;
-  else if (nx >= GRID_W) nx = 0;
-  if (ny < 0) ny = GRID_H - 1;
-  else if (ny >= GRID_H) ny = 0;
+  if (nx < 0 || nx >= GRID_W || ny < 0 || ny >= GRID_H) {
+    if (walls) {
+      gameOver();
+      return;
+    }
+    if (nx < 0) nx = GRID_W - 1;
+    else if (nx >= GRID_W) nx = 0;
+    if (ny < 0) ny = GRID_H - 1;
+    else if (ny >= GRID_H) ny = 0;
+  }
   Point next = { (int8_t)nx, (int8_t)ny };
 
   for (int i = 0; i < snakeLen - 1; i++)
     if (snake[i].x == next.x && snake[i].y == next.y) {
-      resetGame();
+      gameOver();
       return;
     }
 
@@ -79,15 +114,20 @@ void step() {
     placeFood();
   }
 
-  if (snakeLen >= MAX_LEN) resetGame();
+  if (snakeLen >= MAX_LEN) gameOver();
 }
 
-void draw() {
-  display.clearDisplay();
-  display.drawRect(food.x * CELL, food.y * CELL, CELL, CELL, SSD1306_WHITE);
-  for (int i = 0; i < snakeLen; i++)
-    display.fillRect(snake[i].x * CELL, snake[i].y * CELL, CELL, CELL, SSD1306_WHITE);
-  display.display();
+void applyKey(char c) {
+  if (inMenu) {
+    if (c == '1') { walls = false; inMenu = false; resetGame(); draw(); }
+    else if (c == '2') { walls = true; inMenu = false; resetGame(); draw(); }
+    return;
+  }
+  if (c == 'z' && dirY != 1) { nextX = 0; nextY = -1; }
+  else if (c == 's' && dirY != -1) { nextX = 0; nextY = 1; }
+  else if (c == 'q' && dirX != 1) { nextX = -1; nextY = 0; }
+  else if (c == 'd' && dirX != -1) { nextX = 1; nextY = 0; }
+  else if (c == '1' || c == '2') gameOver();
 }
 
 void setup() {
@@ -97,15 +137,15 @@ void setup() {
     for (;;) ;
   }
   randomSeed(esp_random());
-  resetGame();
-  draw();
+  inMenu = true;
+  drawMenu();
   lastStep = millis();
 }
 
 void loop() {
   while (Serial.available()) applyKey((char)Serial.read());
 
-  if ((dirX != 0 || dirY != 0) && millis() - lastStep >= STEP_MS) {
+  if (!inMenu && (nextX != 0 || nextY != 0) && millis() - lastStep >= STEP_MS) {
     lastStep = millis();
     step();
     draw();

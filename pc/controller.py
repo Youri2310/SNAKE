@@ -4,7 +4,7 @@ import sys
 import serial
 from pynput import keyboard
 
-KEYS = {"z", "q", "s", "d"}
+KEYMAP = {"z": "z", "q": "q", "s": "s", "d": "d", "&": "1", "é": "2"}
 
 
 def parse_args(argv=None):
@@ -16,14 +16,16 @@ def parse_args(argv=None):
 
 def run(port, baud):
     link = serial.Serial(port, baud, timeout=1)
-    print(f"Connecte a {port}. ZQSD pour bouger, Echap pour quitter.")
+    print(f"Connecte a {port}. ZQSD pour bouger, &=wrap e=murs, Echap pour quitter.")
 
     def on_press(key):
         if key == keyboard.Key.esc:
             return False
         char = getattr(key, "char", None)
-        if char and char.lower() in KEYS:
-            link.write(f"{char.lower()}\n".encode("ascii"))
+        if char:
+            command = KEYMAP.get(char.lower())
+            if command:
+                link.write(f"{command}\n".encode("ascii"))
         return None
 
     with keyboard.Listener(on_press=on_press) as listener:
