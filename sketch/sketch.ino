@@ -4,7 +4,6 @@
   2. Colision multijoueur entre les serpents car j'avais des bug et c'étais chiant j'avoue j'ai céder à l'ia
 
 */
-
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
@@ -98,7 +97,6 @@ void resetGame()
   }
   placeFood();
 }
-
 // Fonction juste pour dessiner le menu qui prend en paramètre le titre (genre "Joueurs" pour l'étape 1 ou "Terrain" pour l'étape 2) et les 2 options possible à chaque fois
 void drawMenu(const char *title, const char *opt1, const char *opt2)
 {
@@ -115,7 +113,6 @@ void drawMenu(const char *title, const char *opt1, const char *opt2)
   display.print(opt2);
   display.display();
 }
-
 // Fonction qui determine ce que on va affiché sur le menu en fonction du menuStage qui est mis à 0 dans le setup
 void showMenu()
 {
@@ -181,7 +178,6 @@ Point advance(Snake &s, bool &wallDead)
   }
   return {(int8_t)nx, (int8_t)ny};
 }
-
 // Fonction de la collision, est ce que le point p et le point s sont en collision ?
 // Le skip est la dans le cas où on va aller sur une case où un morceau de serpent y était mais n'y sera plus donc on skip car il n'y a pas vrmt de collision
 bool hits(Snake &s, Point p, int skip)
@@ -235,7 +231,6 @@ void stepMulti()
   // Gestion de la mort des 2 serpent en fonction de s'il touche un mur leurs corps ou celui de l'autre serpent , j'avoue je sais même pas pourquoi mes serpents se passais au travers
   bool dead1 = wd1 || hits(p1, h1, 1) || hits(p2, h1, 0);
   bool dead2 = wd2 || hits(p2, h2, 1) || hits(p1, h2, 0);
-
   if (h1.x == h2.x && h1.y == h2.y)
   {
     dead1 = true;
